@@ -23,7 +23,21 @@ class Calculator {
 					Calculator window = new Calculator();
 					window.frmCalculator.setVisible(true);
 
-					rmi();
+					try {
+						// Conectar al servidor de operaciones básicas
+						Registry basicRegistry = LocateRegistry.getRegistry("127.0.0.1", 2580);
+						BasicCalculatorInterface basicCalculator = (BasicCalculatorInterface) basicRegistry
+								.lookup("BasicCalculatorService");
+
+						// Conectar al servidor de operaciones científicas
+						Registry scientificRegistry = LocateRegistry.getRegistry("127.0.0.1", 2580);
+						ScientificCalculatorInterface scientificCalculator = (ScientificCalculatorInterface) scientificRegistry
+								.lookup("ScientificCalculatorService");
+
+					} catch (Exception e) {
+						System.err.println("Cliente exception: " + e.getMessage());
+						e.printStackTrace();
+					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -35,220 +49,202 @@ class Calculator {
 		initialize();
 	}
 
-	public static void rmi (){
-		try {
-            // Conectar al servidor de operaciones básicas
-            Registry basicRegistry = LocateRegistry.getRegistry("127.0.0.1", 2580);
-            BasicCalculatorInterface basicCalculator = (BasicCalculatorInterface) basicRegistry.lookup("BasicCalculatorService");
-
-            // Conectar al servidor de operaciones científicas
-            Registry scientificRegistry = LocateRegistry.getRegistry("127.0.0.1", 2580);
-            ScientificCalculatorInterface scientificCalculator = (ScientificCalculatorInterface) scientificRegistry.lookup("ScientificCalculatorService");
-
-			private int precedence(String x)
-	{
-		int p=10;
-		switch(x) {
-		case "+":
-			p=1;
-			break;
-		case "-":
-			p=2;
-			break;
-		case "x":
-			p=3;
-			break;
-		case "/":
-			p=4;
-			break;
-		case "^":
-			p=6;
-			break;
-		case "!":
-			p=7;
-			break;
+	private int precedence(String x) {
+		int p = 10;
+		switch (x) {
+			case "+":
+				p = 1;
+				break;
+			case "-":
+				p = 2;
+				break;
+			case "x":
+				p = 3;
+				break;
+			case "/":
+				p = 4;
+				break;
+			case "^":
+				p = 6;
+				break;
+			case "!":
+				p = 7;
+				break;
 		}
-	
+
 		return p;
 	}
-	
-	//operator checking
-	private boolean isoperator(String x)
-	{
-		if(x.equals("+") || x.equals("-") || x.equals("x") || x.equals("/") || x.equals("sqrt") || x.equals("^") || x.equals("!") || x.equals("sin") || x.equals("cos") || x.equals("tan") || x.equals("ln") || x.equals("log"))
+
+	// operator checking
+	private boolean isoperator(String x) {
+		if (x.equals("+") || x.equals("-") || x.equals("x") || x.equals("/") || x.equals("sqrt") || x.equals("^")
+				|| x.equals("!") || x.equals("sin") || x.equals("cos") || x.equals("tan") || x.equals("ln")
+				|| x.equals("log"))
 			return true;
-		else 
+		else
 			return false;
 	};
-	
-	private String infixTopostfix()
-	{
-		Stack<String> s=new Stack<String>();
+
+	private String infixTopostfix() {
+		Stack<String> s = new Stack<String>();
 		String y;
 		int flag;
-		String p="";   
+		String p = "";
 		token.add(")");
 		s.push("(");
-		for(String i: token) {
-			if(i.equals("(")){
+		for (String i : token) {
+			if (i.equals("(")) {
 				s.push(i);
-			}else if(i.equals(")")){
-				y=s.pop();
-				while(!y.equals("("))
-				{
-					p=p+y+",";
-					y=s.pop();
+			} else if (i.equals(")")) {
+				y = s.pop();
+				while (!y.equals("(")) {
+					p = p + y + ",";
+					y = s.pop();
 				}
-			}else if(isoperator(i)){
-				y=s.pop();
-				flag=0;
-				if(isoperator(y) && precedence(y)>precedence(i)){
-					p=p+y+",";
-					flag=1;
+			} else if (isoperator(i)) {
+				y = s.pop();
+				flag = 0;
+				if (isoperator(y) && precedence(y) > precedence(i)) {
+					p = p + y + ",";
+					flag = 1;
 				}
-				if(flag==0)
+				if (flag == 0)
 					s.push(y);
-				
+
 				s.push(i);
-			}else{
-				p=p+i+",";
+			} else {
+				p = p + i + ",";
 			}
 		}
-		while(!s.empty()) {
-			y=s.pop();
-			if(!y.equals("(") && !y.equals(")")) {
-				p+=y+",";
+		while (!s.empty()) {
+			y = s.pop();
+			if (!y.equals("(") && !y.equals(")")) {
+				p += y + ",";
 			}
 		}
 		return p;
 	}
 
-	//factorial method
+	// factorial method
 	private double factorial(double y) {
-		double fact=1;
-		if(y==0 || y==1) {
-			fact=1;
-		}else {
-			for(int i=2; i<=y; i++) {
-				fact*=i;
+		double fact = 1;
+		if (y == 0 || y == 1) {
+			fact = 1;
+		} else {
+			for (int i = 2; i <= y; i++) {
+				fact *= i;
 			}
 		}
 		return fact;
 	}
-	
-	//for actual calculation with binary operators
-	private double calculate(double x,double y,String c)
-	{
-		double res=0;
-		switch(c)
-		{
+
+	// for actual calculation with binary operators
+	private double calculate(double x, double y, String c) {
+		double res = 0;
+		switch (c) {
 			case "-":
-				res= x-y;
+				res = x - y;
 				break;
 			case "+":
-				res= x+y;
+				res = x + y;
 				break;
 			case "x":
-				res= x*y;
+				res = x * y;
 				break;
 			case "/":
-				res= x/y;
+				res = x / y;
 				break;
 			case "^":
-				res= Math.pow(x,y);
+				res = Math.pow(x, y);
 				break;
-			default :
-				res= 0;
-		}
-		return res;
-	}
-	
-	//calculation with unary operators
-	private double calculate(double y,String c) {
-		double res=0;
-		switch(c) {
-		case "log":
-			res = Math.log10(y);
-			break;
-		case "sin":
-			res= Math.sin(y);
-			break;
-		case "cos":
-			res = Math.cos(y);
-			break;
-		case "tan":
-			res =Math.tan(y);
-			break;
-		case "ln":
-			res= Math.log(y);
-			break;
-		case "sqrt":
-			res= Math.sqrt(y);
-			break;
-		case "!":
-			res=factorial(y);
-			break;
+			default:
+				res = 0;
 		}
 		return res;
 	}
 
-	private double Eval(String p)
-	{	
+	// calculation with unary operators
+	private double calculate(double y, String c) {
+		double res = 0;
+		switch (c) {
+			case "log":
+				res = Math.log10(y);
+				break;
+			case "sin":
+				res = Math.sin(y);
+				break;
+			case "cos":
+				res = Math.cos(y);
+				break;
+			case "tan":
+				res = Math.tan(y);
+				break;
+			case "ln":
+				res = Math.log(y);
+				break;
+			case "sqrt":
+				res = Math.sqrt(y);
+				break;
+			case "!":
+				res = factorial(y);
+				break;
+		}
+		return res;
+	}
+
+	private double Eval(String p) {
 		String tokens[] = p.split(",");
-		ArrayList<String> token2=new ArrayList<String>();
-		for(int i=0; i<tokens.length; i++) {
-			if(! tokens[i].equals("") && ! tokens[i].equals(" ") && ! tokens[i].equals("\n") && ! tokens[i].equals("  ")) {
-				token2.add(tokens[i]);  // tokens from post fix form p actual tokens for calculation
+		ArrayList<String> token2 = new ArrayList<String>();
+		for (int i = 0; i < tokens.length; i++) {
+			if (!tokens[i].equals("") && !tokens[i].equals(" ") && !tokens[i].equals("\n") && !tokens[i].equals("  ")) {
+				token2.add(tokens[i]); // tokens from post fix form p actual tokens for calculation
 			}
 		}
-		
-		Stack<Double> s=new Stack<Double>();
-		double x,y;
-		for(String  i:token2) {
-			if(isoperator(i)){
-				//if it is unary operator or function
-				if(i.equals("sin") ||i.equals("cos") ||i.equals("tan") ||i.equals("log") || i.equals("ln") || i.equals("sqrt") || i.equals("!")) {
-					y=s.pop();
-					s.push(calculate(y,i));
-				}else {
-					//for binary operators
-					y=s.pop();
-					x=s.pop();
-					s.push(calculate(x,y,i));
+
+		Stack<Double> s = new Stack<Double>();
+		double x, y;
+		for (String i : token2) {
+			if (isoperator(i)) {
+				// if it is unary operator or function
+				if (i.equals("sin") || i.equals("cos") || i.equals("tan") || i.equals("log") || i.equals("ln")
+						|| i.equals("sqrt") || i.equals("!")) {
+					y = s.pop();
+					s.push(calculate(y, i));
+				} else {
+					// for binary operators
+					y = s.pop();
+					x = s.pop();
+					s.push(calculate(x, y, i));
 				}
-			}else{
-				if(i.equals("pi"))
+			} else {
+				if (i.equals("pi"))
 					s.push(Math.PI);
-				else if(i.equals("e"))
+				else if (i.equals("e"))
 					s.push(Math.E);
 				else
 					s.push(Double.valueOf(i));
 			}
 		}
-		double res=1;
-		while(!s.empty()) {
-			res*=s.pop();
+		double res = 1;
+		while (!s.empty()) {
+			res *= s.pop();
 		}
-		return res;  //final result
+		return res; // final result
 	}
 
-	//actual combined method for calculation 
+	// actual combined method for calculation
 	private void calculateMain() {
-		String tokens[]=expression.split(",");
-		for(int i=0; i<tokens.length; i++) {
-			if(! tokens[i].equals("") && ! tokens[i].equals(" ") && ! tokens[i].equals("\n") && ! tokens[i].equals("  ")) {
-				token.add(tokens[i]);  //adding token to token array list from expression 
+		String tokens[] = expression.split(",");
+		for (int i = 0; i < tokens.length; i++) {
+			if (!tokens[i].equals("") && !tokens[i].equals(" ") && !tokens[i].equals("\n") && !tokens[i].equals("  ")) {
+				token.add(tokens[i]); // adding token to token array list from expression
 			}
 		}
 		try {
 			double res = Eval(infixTopostfix());
-			result= Double.toString(res);
-		}catch(Exception e) {}
-	}
-        } catch (Exception e) {
-            System.err.println("Cliente exception: " + e.getMessage());
-            e.printStackTrace();
-        }
+			result = Double.toString(res);
+		} catch (Exception e) {
+		}
 	}
 
 	// design of the frame with their action listner
